@@ -1,1 +1,1 @@
-# School Reacord Calculator
+# School Record Calculator
