@@ -1,18 +1,17 @@
 {
   "name": "school-record-calculator",
   "version": "1.0.0",
-  "description": "neis api",
+  "description": "school record calculator",
   "keywords": [
-    "neis",
-    "api"
+    "school-record-calculator"
   ],
-  "homepage": "https://github.com/samil-th-code-assemble/neis-api#readme",
+  "homepage": "https://github.com/samil-th-code-assemble/school-record-calculator#readme",
   "bugs": {
-    "url": "https://github.com/samil-th-code-assemble/neis-api/issues"
+    "url": "https://github.com/samil-th-code-assemble/school-record-calculator/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/samil-th-code-assemble/neis-api.git"
+    "url": "git+https://github.com/samil-th-code-assemble/school-record-calculator.git"
   },
   "license": "MIT",
   "author": "Agent0876",
@@ -20,5 +19,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
   }
 }
