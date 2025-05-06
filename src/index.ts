@@ -1,1 +1,1 @@
-// 내신계산기 라이브러리 만들어줘
+export * from './schoolRecordCalculator';
