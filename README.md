@@ -50,7 +50,7 @@ const subjects = [
 ];
 
 const averageGrade = calculator.calculateAverageGrade(subjects);
-console.log(averageGrade); // 예: 2.5
+console.log(averageGrade); // 예: { average: 2.5, invalidSubjects: [] }
 
 // 등급 구간 확인
 const percentileRanges = calculator.getPercentileRanges();
@@ -102,6 +102,11 @@ interface Subject {
   rank: number;    // 석차
   sameRank: number; // 동석차
   completer: number; // 이수자 수
+}
+
+interface AverageGradeResult {
+  average: number;           // 평균 등급
+  invalidSubjects: string[]; // 유효하지 않은 과목 목록
 }
 ```
 

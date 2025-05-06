@@ -1,21 +1,45 @@
 // schoolRecordCalculator.ts
 
 /**
- * Custom error class for invalid input data
+ * Custom error classes for different error scenarios
  */
-class InvalidInputError extends Error {
+export class InvalidInputError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'InvalidInputError';
   }
 }
 
-interface Subject {
+export class CalculationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'CalculationError';
+  }
+}
+
+/**
+ * Enum for grade types
+ */
+export enum GradeType {
+  NINE = '9',
+  FIVE = '5',
+}
+
+/**
+ * Interface for subject information
+ */
+export interface Subject {
   name: string;
   unit: number;
   rank: number;
   sameRank: number;
   completer: number;
+
+  /**
+   * Validates the subject data
+   * @throws {InvalidInputError} if the subject data is invalid
+   */
+  validate(): void;
 }
 
 interface GradeCalculator {
@@ -120,60 +144,102 @@ class Grade5Calculator extends BaseGradeCalculator {
 export class SchoolRecordCalculator {
   private calculator: GradeCalculator;
 
-  constructor(gradeType: '9' | '5') {
-    this.calculator = gradeType === '9' ? new Grade9Calculator() : new Grade5Calculator();
+  /**
+   * Creates a new SchoolRecordCalculator instance
+   * @param gradeType - The type of grade system to use ('9' or '5')
+   * @throws {InvalidInputError} if the grade type is invalid
+   */
+  constructor(gradeType: GradeType) {
+    if (gradeType !== GradeType.NINE && gradeType !== GradeType.FIVE) {
+      throw new InvalidInputError('Invalid grade type. Must be either "9" or "5"');
+    }
+    this.calculator =
+      gradeType === GradeType.NINE ? new Grade9Calculator() : new Grade5Calculator();
   }
 
   /**
-   * 과목의 등급을 계산합니다.
-   * @param subject 과목 정보
-   * @returns 계산된 등급
-   * @throws {InvalidInputError} 입력값이 유효하지 않은 경우
+   * Calculates the grade for a single subject
+   * @param subject - The subject information
+   * @returns The calculated grade
+   * @throws {InvalidInputError} if the subject data is invalid
+   * @throws {CalculationError} if the grade calculation fails
    */
   calculateSubjectGrade(subject: Subject): number {
-    return this.calculator.calculateGrade(subject.rank, subject.sameRank, subject.completer);
+    try {
+      if (typeof subject.validate !== 'function') {
+        throw new InvalidInputError('Subject must have a valid validate method');
+      }
+      subject.validate();
+
+      if (typeof this.calculator.calculateGrade !== 'function') {
+        throw new CalculationError('Calculator must have a valid calculateGrade method');
+      }
+      return this.calculator.calculateGrade(subject.rank, subject.sameRank, subject.completer);
+    } catch (error: unknown) {
+      if (error instanceof InvalidInputError) {
+        throw error;
+      }
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new CalculationError(
+        `Failed to calculate grade for subject "${subject.name}": ${errorMessage}`
+      );
+    }
   }
 
   /**
-   * 여러 과목의 평균 등급을 계산합니다.
-   * @param subjects 과목 정보 배열
-   * @returns 평균 등급 (소수점 둘째자리까지 반올림)
-   * @throws {Error} 유효한 등급이 없는 경우
+   * Calculates the average grade for multiple subjects
+   * @param subjects - Array of subject information
+   * @returns The average grade (rounded to 2 decimal places)
+   * @throws {CalculationError} if no valid grades can be calculated
    */
-  calculateAverageGrade(subjects: Subject[]): number {
+  calculateAverageGrade(subjects: Subject[]): { average: number; invalidSubjects: string[] } {
     if (subjects.length === 0) {
-      throw new Error('과목 정보가 없습니다.');
+      throw new CalculationError('No subjects provided');
     }
 
     let sum = 0;
     let count = 0;
+    const invalidSubjects: string[] = [];
 
     for (const subject of subjects) {
       try {
-        const grade = this.calculateSubjectGrade(subject);
+        subject.validate();
+        const grade = this.calculator.calculateGrade(
+          subject.rank,
+          subject.sameRank,
+          subject.completer
+        );
         sum += grade;
         count++;
-      } catch (error) {
-        if (error instanceof InvalidInputError) {
-          console.warn(`과목 "${subject.name}"의 등급 계산 중 오류: ${error.message}`);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          invalidSubjects.push(`${subject.name}: ${error.message}`);
+        } else if (typeof error === 'string') {
+          invalidSubjects.push(`${subject.name}: ${error}`);
         } else {
-          throw error;
+          invalidSubjects.push(`${subject.name}: Unknown error`);
         }
       }
     }
 
     if (count === 0) {
-      throw new Error('유효한 등급을 계산할 수 있는 과목이 없습니다.');
+      throw new CalculationError('No valid grades could be calculated');
     }
 
-    return Math.round((sum / count) * 100) / 100;
+    return {
+      average: Math.round((sum / count) * 100) / 100,
+      invalidSubjects,
+    };
   }
 
   /**
-   * 등급별 백분위 범위를 반환합니다.
-   * @returns 등급별 백분위 범위 배열
+   * Returns the percentile ranges for each grade
+   * @returns Array of percentile range descriptions
    */
   getPercentileRanges(): string[] {
+    if (typeof this.calculator.getPercentileRanges !== 'function') {
+      throw new CalculationError('Calculator must have a valid getPercentileRanges method');
+    }
     return this.calculator.getPercentileRanges();
   }
 }
